@@ -26,9 +26,10 @@ export function ProductCard({ product, variant = "grid", priority = false }: Pro
             src={product.imageUrl}
             alt={product.name}
             fill
-            sizes={listLayout ? "(max-width: 640px) 96px, 144px" : "(max-width: 360px) 100vw, (max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"}
-            loading={priority ? "eager" : "lazy"}
-            className="object-contain p-2 transition-transform duration-200 group-hover:scale-[1.02]"
+
+            sizes={listLayout ? "(max-width: 640px) 112px, 160px" : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"}
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            unoptimized
           />
         ) : (
           <span className="text-5xl" aria-hidden="true">{product.emoji}</span>
@@ -50,9 +51,18 @@ export function ProductCard({ product, variant = "grid", priority = false }: Pro
           </p>
         )}
         <div className="mt-auto pt-3">
-          <p className="product-card-price text-slate-950">{formatPrice(product.price)}</p>
-          <p className={`mt-1 text-xs ${product.stock > 0 ? "text-emerald-700" : "text-red-600"}`}>
-            {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+
+          <p className="text-lg font-bold tracking-tight text-slate-950">{formatPrice(product.price)}</p>
+          {product.price !== undefined && product.originalPrice !== undefined && product.originalPrice > product.price && (
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span className="line-through">{formatPrice(product.originalPrice)}</span>
+              {product.discountPercentage !== undefined && product.discountPercentage > 0 && (
+                <span className="font-semibold text-emerald-700">{product.discountPercentage}% off</span>
+              )}
+            </p>
+          )}
+          <p className={`mt-1 text-xs font-medium ${product.stock > 0 ? "text-emerald-700" : "text-red-600"}`}>
+            {product.availability ?? (product.stock > 0 ? "Available" : "Unavailable")}
           </p>
           <Link
             href={`/products/${product.id}`}

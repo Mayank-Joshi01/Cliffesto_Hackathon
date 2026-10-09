@@ -1,36 +1,46 @@
 "use client";
-
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { CatalogCategory, CatalogProduct, CatalogSort } from "@/lib/catalog";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { SupabaseCatalogNotice } from "@/components/feedback/SupabaseCatalogNotice";
 import { formatPrice } from "@/lib/products";
-
 type ResponseData = {
   data: CatalogProduct[];
   total: number;
   page: number;
   limit: number;
   categories: CatalogCategory[];
-  source: "mock" | "database";
+  source: "database";
+  hasVisibleProducts?: boolean;
   error?: string;
 };
-
 type FilterValues = {
   category: string;
   minPrice: string;
   maxPrice: string;
-  inStock: boolean;
 };
-
 const sortOptions: { value: CatalogSort; label: string }[] = [
   { value: "relevance", label: "Relevance" },
   { value: "smart", label: "Smart discovery" },
   { value: "price-asc", label: "Price: low to high" },
   { value: "price-desc", label: "Price: high to low" },
-  { value: "newest", label: "Newest" },
 ];
+/**
+ * The catalog may contain multiple records with the same category slug.
+ * A category slug identifies one filter value, so expose that value once.
+ * Keep the first record to preserve the label/slug users already see.
+ */
+function uniqueCategoryOptions(categories: CatalogCategory[]): CatalogCategory[] {
+  const seen = new Set<string>();
+  return categories.filter((category) => {
+    const slug = category.slug.trim().toLocaleLowerCase();
+    if (!slug || seen.has(slug)) return false;
+    seen.add(slug);
+    return true;
+  });
+}
 
 function FilterForm({
   categories,
@@ -49,7 +59,6 @@ function FilterForm({
   const minPriceId = `${idPrefix}-min-price`;
   const maxPriceId = `${idPrefix}-max-price`;
   const [validationError, setValidationError] = useState("");
-
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -64,21 +73,22 @@ function FilterForm({
       category: String(form.get("category") ?? ""),
       minPrice,
       maxPrice,
-      inStock: form.get("inStock") === "on",
     });
     onClose?.();
   }
-
   return (
     <form onSubmit={submit} className="space-y-5">
       <label className="block text-sm font-medium text-slate-800">
         Category
         <select name="category" defaultValue={values.category} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800">
           <option value="">All categories</option>
-          {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}
+          {uniqueCategoryOptions(categories).map((category) => (
+          <option key={category.slug.toLocaleLowerCase()} value={category.slug}>
+            {category.name}
+          </option>
+        ))}
         </select>
       </label>
-
       <fieldset>
         <legend className="text-sm font-medium text-slate-800">Price range (INR)</legend>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -88,13 +98,7 @@ function FilterForm({
           <input id={maxPriceId} name="maxPrice" type="number" min="0" step="1" inputMode="numeric" placeholder="Max" defaultValue={values.maxPrice} className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 text-sm" />
         </div>
       </fieldset>
-
-      <label className="flex min-h-11 items-center gap-3 text-sm text-slate-700">
-        <input type="checkbox" name="inStock" defaultChecked={values.inStock} className="h-4 w-4 accent-violet-700" />
-        In-stock products only
-      </label>
       {validationError && <p role="alert" className="text-sm font-medium text-red-600">{validationError}</p>}
-
       <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-4">
         <button type="button" onClick={onClear} className="min-h-11 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
           Clear filters
@@ -106,12 +110,13 @@ function FilterForm({
     </form>
   );
 }
-
 export function ProductBrowser({
   initialCategorySlug,
+  initialSubcategory,
   categoryTitle,
 }: {
   initialCategorySlug?: string;
+  initialSubcategory?: string;
   categoryTitle?: string;
 }) {
   const router = useRouter();
@@ -124,8 +129,7 @@ export function ProductBrowser({
   const sort = sortOptions.some((option) => option.value === sortParam) ? sortParam as CatalogSort : "relevance";
   const view = params.get("view") === "list" ? "list" : "grid";
   const page = Math.max(1, Number(params.get("page") ?? 1) || 1);
-  const requestKey = `${pathname}?${queryString}|${initialCategorySlug ?? ""}`;
-
+  const requestKey = `${pathname}?${queryString}|${initialCategorySlug ?? ""}|${initialSubcategory ?? ""}`;
   const [result, setResult] = useState<{ key: string; value: ResponseData } | null>(null);
   const [error, setError] = useState<{ key: string; message: string } | null>(null);
   const [searchInput, setSearchInput] = useState(query);
@@ -137,20 +141,18 @@ export function ProductBrowser({
   const currentError = error?.key === requestKey ? error.message : "";
   const loading = !currentResult && !currentError;
   const categories = currentResult?.categories ?? [];
-
   useEffect(() => {
     const timer = window.setTimeout(() => setSearchInput(query), 0);
     return () => window.clearTimeout(timer);
   }, [query]);
-
   useEffect(() => {
     const id = ++requestId.current;
     const apiParams = new URLSearchParams(queryString);
     if (initialCategorySlug && !apiParams.has("category")) apiParams.set("category", initialCategorySlug);
+    if (initialSubcategory && !apiParams.has("subcategory")) apiParams.set("subcategory", initialSubcategory);
     apiParams.set("page", String(page));
     apiParams.set("limit", "12");
     const controller = new AbortController();
-
     fetch(`/api/products?${apiParams}`, { signal: controller.signal })
       .then(async (response) => {
         const body = await response.json() as ResponseData;
@@ -166,15 +168,13 @@ export function ProductBrowser({
         }
       });
     return () => controller.abort();
-  }, [initialCategorySlug, page, queryString, requestKey, retryCount]);
-
+  }, [initialCategorySlug, initialSubcategory, page, queryString, requestKey, retryCount]);
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (filterOpen && !dialog.open) dialog.showModal();
     if (!filterOpen && dialog.open) dialog.close();
   }, [filterOpen]);
-
   useEffect(() => {
     if (!filterOpen) return;
     function closeOnEscape(event: KeyboardEvent) {
@@ -183,7 +183,6 @@ export function ProductBrowser({
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [filterOpen]);
-
   function updateUrl(changes: Record<string, string | null>) {
     const next = new URLSearchParams(queryString);
     for (const [key, value] of Object.entries(changes)) {
@@ -193,46 +192,37 @@ export function ProductBrowser({
     next.delete("page");
     router.push(`${pathname}${next.size ? `?${next.toString()}` : ""}`);
   }
-
   function applyFilters(values: FilterValues) {
     updateUrl({
       category: values.category || initialCategorySlug || null,
       minPrice: values.minPrice.trim() || null,
       maxPrice: values.maxPrice.trim() || null,
-      inStock: values.inStock ? "true" : null,
     });
   }
-
   function clearFilters() {
     updateUrl({
       category: initialCategorySlug ?? null,
       minPrice: null,
       maxPrice: null,
-      inStock: null,
     });
   }
-
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     updateUrl({ q: searchInput.trim() || null });
   }
-
   function setSort(value: string) {
     updateUrl({ sort: value === "relevance" ? null : value });
   }
-
   const filterValues: FilterValues = {
     category,
     minPrice: params.get("minPrice") ?? "",
     maxPrice: params.get("maxPrice") ?? "",
-    inStock: params.get("inStock") === "true",
   };
   const totalPages = Math.max(1, Math.ceil((currentResult?.total ?? 0) / (currentResult?.limit ?? 12)));
   const activeFilters = [
     category && { key: "category", label: categories.find((item) => item.slug === category)?.name ?? category },
     params.get("minPrice") && { key: "minPrice", label: `From ${formatPrice(Number(params.get("minPrice")))}` },
     params.get("maxPrice") && { key: "maxPrice", label: `Up to ${formatPrice(Number(params.get("maxPrice")))}` },
-    filterValues.inStock && { key: "inStock", label: "In stock" },
   ].filter((item): item is { key: string; label: string } => Boolean(item));
   const filterForm = (
     <FilterForm
@@ -244,7 +234,6 @@ export function ProductBrowser({
       onClose={() => setFilterOpen(false)}
     />
   );
-
   return (
     <section className="space-y-5">
       <div className="rounded-lg border border-slate-200 bg-white p-2 sm:p-3">
@@ -269,7 +258,6 @@ export function ProductBrowser({
           </button>
         </form>
       </div>
-
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="min-w-0">
           <p className="product-browser-label text-xs font-medium text-violet-700">
@@ -282,11 +270,10 @@ export function ProductBrowser({
             {loading ? "Loading products…" : currentError ? "Results unavailable" : `${currentResult?.total ?? 0} ${currentResult?.total === 1 ? "product" : "products"}`}
           </p>
         </div>
-
         <label className="hidden min-h-11 items-center gap-2 text-sm text-slate-700 md:flex">
           <span className="hidden sm:inline">Sort by</span>
-          <select aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800">
-            {sortOptions.filter((option) => option.value !== "newest" || currentResult?.source === "database").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          <select aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800">
+            {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
         <div role="group" aria-label="Product view" className="hidden items-center rounded-md border border-slate-300 p-1 sm:flex">
@@ -298,13 +285,11 @@ export function ProductBrowser({
           </button>
         </div>
       </div>
-
       {sort === "smart" && (
         <p className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-          Smart discovery prioritizes in-stock products, then lower prices. It uses catalog availability and price only; no ratings or recommendations are fabricated.
+          Smart discovery prioritizes products with the largest listed discount.
         </p>
       )}
-
       <div className="sticky top-0 z-20 -mx-3 flex items-center gap-2 border-y border-slate-200 bg-[var(--page-bg)] px-3 py-2 sm:-mx-5 sm:px-5 lg:hidden">
         <button type="button" onClick={() => setFilterOpen(true)} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 hover:bg-slate-50">
           <span aria-hidden="true">☷</span>
@@ -312,12 +297,11 @@ export function ProductBrowser({
           {activeFilters.length > 0 && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">{activeFilters.length}</span>}
         </button>
         <label className="sr-only" htmlFor="mobile-sort">Sort products</label>
-        <select id="mobile-sort" aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-800 md:hidden">
-          {sortOptions.filter((option) => option.value !== "newest" || currentResult?.source === "database").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        <select id="mobile-sort" aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 min-w-0 max-w-[37%] flex-1 rounded-xl border border-slate-300 bg-white px-2 text-xs text-slate-800">
+          {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
         <span className="hidden whitespace-nowrap text-xs text-slate-600 sm:inline">{currentResult?.total ?? 0} results</span>
       </div>
-
       {activeFilters.length > 0 && (
         <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
           {activeFilters.map((filter) => (
@@ -328,13 +312,11 @@ export function ProductBrowser({
           <button type="button" onClick={clearFilters} className="min-h-9 px-2 text-xs font-semibold text-violet-700 underline underline-offset-2">Clear all</button>
         </div>
       )}
-
       <div className="grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="sticky top-4 hidden rounded-lg border border-slate-200 bg-white p-4 lg:block">
           <h2 className="mb-4 text-base font-medium text-slate-900">Filter products</h2>
           {filterForm}
         </aside>
-
         <div className="min-w-0">
           {currentError ? (
             <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-8 text-center text-red-700">
@@ -347,13 +329,14 @@ export function ProductBrowser({
             </div>
           ) : currentResult?.data.length ? (
             <ProductGrid products={currentResult.data} variant={view === "list" ? "list" : query ? "search" : "grid"} />
+          ) : currentResult?.hasVisibleProducts === false ? (
+            <SupabaseCatalogNotice />
           ) : (
             <EmptyState title="No products found">
               Try changing your search or filters.
               {query && <button type="button" onClick={() => { setSearchInput(""); updateUrl({ q: null }); }} className="mt-4 block w-full font-semibold text-violet-700 underline underline-offset-2">Clear search</button>}
             </EmptyState>
           )}
-
           {!loading && !currentError && totalPages > 1 && (
             <nav className="mt-8 flex flex-wrap items-center justify-center gap-3" aria-label="Product pagination">
               <button type="button" disabled={page <= 1} onClick={() => { const next = new URLSearchParams(queryString); next.set("page", String(page - 1)); router.push(`${pathname}?${next.toString()}`); }} className="min-h-11 rounded-xl border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
@@ -363,7 +346,6 @@ export function ProductBrowser({
           )}
         </div>
       </div>
-
       <dialog
         ref={dialogRef}
         aria-label="Product filters"
