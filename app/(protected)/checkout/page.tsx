@@ -84,16 +84,16 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-6 py-14">
-      <h1 className="text-4xl font-bold text-slate-900">Checkout</h1>
+    <main className="mx-auto min-h-screen max-w-5xl px-3 py-7 sm:px-5 sm:py-10">
+      <h1 className="text-slate-900">Checkout</h1>
       
       <div className="mt-8 grid gap-8 md:grid-cols-2">
         <div className="space-y-6">
           
           {/* Shipping Address Section */}
-          <section className="rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
+          <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-slate-900">
                 <MapPin className="h-5 w-5 text-indigo-600" />
                 Shipping Address
               </h2>
@@ -118,7 +118,7 @@ export default function CheckoutPage() {
                     required
                     value={addressDraft.full_name}
                     onChange={(e) => setAddressDraft({ ...addressDraft, full_name: e.target.value })}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                    className="min-h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                   />
                 </div>
                 <div>
@@ -128,7 +128,7 @@ export default function CheckoutPage() {
                     required
                     value={addressDraft.line1}
                     onChange={(e) => setAddressDraft({ ...addressDraft, line1: e.target.value })}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                    className="min-h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -139,7 +139,7 @@ export default function CheckoutPage() {
                       required
                       value={addressDraft.city}
                       onChange={(e) => setAddressDraft({ ...addressDraft, city: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                      className="min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
                   </div>
                   <div>
@@ -149,7 +149,7 @@ export default function CheckoutPage() {
                       required
                       value={addressDraft.postal_code}
                       onChange={(e) => setAddressDraft({ ...addressDraft, postal_code: e.target.value })}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                      className="min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
                   </div>
                 </div>
@@ -186,11 +186,11 @@ export default function CheckoutPage() {
           </section>
 
           {/* Payment Method Section */}
-          <section className="rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-semibold text-slate-900">Payment Method</h2>
+          <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
+            <h2 className="mb-4 text-slate-900">Payment Method</h2>
             <div className="space-y-3">
               <label
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition ${
+                className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-md border p-3 transition ${
                   paymentMode === "card" ? "border-indigo-600 bg-indigo-50/50" : "border-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -207,7 +207,7 @@ export default function CheckoutPage() {
               </label>
 
               <label
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition ${
+                className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-md border p-3 transition ${
                   paymentMode === "cod" ? "border-indigo-600 bg-indigo-50/50" : "border-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -227,8 +227,8 @@ export default function CheckoutPage() {
         </div>
 
         {/* Order Summary */}
-        <aside className="h-fit rounded-2xl bg-slate-50 p-6">
-          <h2 className="text-xl font-semibold text-slate-900">Order summary</h2>
+        <aside className="h-fit rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
+          <h2 className="text-slate-900">Order summary</h2>
           <div className="mt-6 space-y-4 text-sm text-slate-600">
             <p>Prices are recalculated from trusted catalog data when an order is created.</p>
             
@@ -241,7 +241,7 @@ export default function CheckoutPage() {
 
             <button
               disabled={!address || isEditingAddress}
-              className="mt-6 w-full rounded-xl bg-slate-900 px-5 py-3.5 text-center font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 min-h-11 w-full rounded-md bg-slate-900 px-5 text-center text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Place Order
             </button>

@@ -1,7 +1,7 @@
 import { query } from "@/lib/db";
 import { products as mockProducts, type Product } from "@/lib/products";
 
-export type CatalogProduct = Product & { imageUrl?: string };
+export type CatalogProduct = Product & { imageUrl?: string; categorySlug?: string };
 export type CatalogCategory = { name: string; slug: string };
 export type CatalogSort = "relevance" | "smart" | "price-asc" | "price-desc" | "newest";
 
@@ -10,6 +10,7 @@ type ProductRow = {
   slug: string;
   name: string;
   category: string;
+  category_slug: string | null;
   description: string;
   price: string;
   stock: number;
@@ -17,7 +18,7 @@ type ProductRow = {
 };
 
 const selectProducts = `
-  SELECT p.id, p.slug, p.name, COALESCE(c.name, 'Uncategorized') AS category,
+  SELECT p.id, p.slug, p.name, COALESCE(c.name, 'Uncategorized') AS category, c.slug AS category_slug,
          p.description, p.price::text, p.stock, pi.url AS image_url
   FROM products p
   LEFT JOIN categories c ON c.id = p.category_id
@@ -28,7 +29,17 @@ const selectProducts = `
 `;
 
 function mapProduct(row: ProductRow): CatalogProduct {
-  return { id: row.slug, name: row.name, category: row.category, description: row.description, price: Number(row.price), stock: row.stock, emoji: "🛍️", imageUrl: row.image_url ?? undefined };
+  return {
+    id: row.slug,
+    name: row.name,
+    category: row.category,
+    categorySlug: row.category_slug ?? row.category.toLowerCase().replace(/\s+/g, "-"),
+    description: row.description,
+    price: Number(row.price),
+    stock: row.stock,
+    emoji: "🛍️",
+    imageUrl: row.image_url ?? undefined,
+  };
 }
 
 function canUseDatabase() {

@@ -138,17 +138,17 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f9] px-3 py-5 text-slate-900 sm:px-6 sm:py-8 lg:py-10">
+    <main className="min-h-screen bg-[var(--page-bg)] px-3 py-5 text-slate-900 sm:px-5 sm:py-8 lg:py-10">
       <div className="mx-auto w-full max-w-7xl">
         {/* Header */}
         <header className="mb-5 sm:mb-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600 sm:text-sm">
+          <p className="text-xs font-medium text-indigo-600 sm:text-sm">
             Cliffesto Store
           </p>
 
           <div className="mt-2 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+              <h1 className="text-slate-900">
                 Shopping Cart
               </h1>
 
@@ -157,7 +157,7 @@ export default function CartPage() {
               </p>
             </div>
 
-            <span className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 sm:px-4 sm:text-sm">
+            <span className="shrink-0 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 sm:px-4 sm:text-sm">
               {totals.itemCount}{" "}
               {totals.itemCount === 1 ? "item" : "items"}
             </span>
@@ -166,7 +166,7 @@ export default function CartPage() {
 
         {/* Empty cart */}
         {items.length === 0 ? (
-          <section className="rounded-xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm sm:rounded-2xl sm:px-6 sm:py-16">
+          <section className="rounded-lg border border-slate-200 bg-white px-5 py-10 text-center sm:px-6 sm:py-12">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 sm:h-16 sm:w-16">
               <ShoppingBag className="h-7 w-7 sm:h-8 sm:w-8" />
             </div>
@@ -181,7 +181,7 @@ export default function CartPage() {
 
             <Link
               href="/products"
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-600 px-6 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:mt-6 sm:text-base"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-5 text-sm font-medium text-white transition hover:bg-indigo-700 sm:mt-6"
             >
               Explore products
             </Link>
@@ -191,7 +191,7 @@ export default function CartPage() {
             {/* Product details */}
             <section
               aria-labelledby="product-details-heading"
-              className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-2xl"
+              className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white"
             >
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5 lg:px-7">
                 <h2
@@ -221,7 +221,7 @@ export default function CartPage() {
                     <li key={item.id} className="py-5 sm:py-6">
                       <div className="flex min-w-0 gap-3 sm:gap-5">
                         {/* Product image */}
-                        <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-36 sm:w-28 md:h-40 md:w-32">
+                        <div className="relative aspect-square h-24 w-24 shrink-0 overflow-hidden rounded-md bg-slate-100 sm:h-32 sm:w-32">
                           <Image
                             src={item.imageUrl}
                             alt={item.name}

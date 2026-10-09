@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 const KEY = "cliffesto_recent_searches";
-const MAX = 10;
+const MAX = 8;
 
 export function useRecentSearches() {
   const [searches, setSearches] = useState<string[]>([]);
@@ -20,7 +20,11 @@ export function useRecentSearches() {
   }, []);
   const persist = useCallback((next: string[]) => {
     setSearches(next);
-    window.localStorage.setItem(KEY, JSON.stringify(next));
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(next));
+    } catch (error) {
+      console.error("Unable to save recent searches.", error);
+    }
   }, []);
   const add = useCallback((value: string) => {
     const normalized = value.trim().replace(/\s+/g, " ");

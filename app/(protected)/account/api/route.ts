@@ -1,9 +1,10 @@
-import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
   clearSessionCookie,
   enforceAuthRateLimit,
+  hashPassword,
+  verifyPassword,
 } from "@/lib/auth";
 import { query, withTransaction } from "@/lib/db";
 import { authorizeAccountRequest } from "../account-api";
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
 
         const updated = await query(
           `UPDATE users
-           SET name = $1, updated_at = now()
+           SET name = $1, full_name = $1, updated_at = now()
            WHERE id = $2 AND is_active = true
            RETURNING id`,
           [name, account.id],
@@ -213,14 +214,14 @@ export async function POST(request: Request) {
           [account.id],
         );
         const currentHash = current.rows[0]?.password_hash;
-        if (!currentHash || !(await bcrypt.compare(currentPassword, currentHash))) {
+        if (!currentHash || !(await verifyPassword(currentPassword, currentHash))) {
           return NextResponse.json(
             { error: "Your current password is incorrect." },
             { status: 400 },
           );
         }
 
-        const newHash = await bcrypt.hash(newPassword, 12);
+        const newHash = await hashPassword(newPassword);
         await withTransaction(async (client) => {
           const updated = await client.query(
             `UPDATE users
@@ -260,19 +261,19 @@ export async function POST(request: Request) {
           [account.id],
         );
         const currentHash = current.rows[0]?.password_hash;
-        if (!currentHash || !(await bcrypt.compare(password, currentHash))) {
+        if (!currentHash || !(await verifyPassword(password, currentHash))) {
           return NextResponse.json(
             { error: "Your password is incorrect." },
             { status: 400 },
           );
         }
 
-        const replacementHash = await bcrypt.hash(randomUUID(), 12);
+        const replacementHash = await hashPassword(randomUUID());
         const deletedEmail = `deleted+${randomUUID()}@invalid.example`;
         await withTransaction(async (client) => {
           const deactivated = await client.query(
             `UPDATE users
-             SET email = $1, password_hash = $2, name = NULL,
+             SET email = $1, password_hash = $2, name = NULL, full_name = '',
                  is_active = false, updated_at = now()
              WHERE id = $3 AND is_active = true
              RETURNING id`,

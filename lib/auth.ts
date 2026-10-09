@@ -16,20 +16,44 @@ type SessionRow = {
 
 
 
+export class AuthRateLimitError extends Error {
+  constructor() {
+    super("Too many authentication attempts.");
+    this.name = "AuthRateLimitError";
+  }
+}
+
+export class InvalidAuthOriginError extends Error {
+  constructor() {
+    super("Invalid request origin.");
+    this.name = "InvalidAuthOriginError";
+  }
+}
+
 function tokenHash(token: string) {
   return createHash("sha256").update(`${getSessionSecret()}:${token}`).digest("hex");
 }
 
-export function validateCredentials(email: unknown, password: unknown) {
-  return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
-    typeof password === "string" && password.length >= 8 && password.length <= 128;
+function passwordDigest(password: string) {
+  return createHash("sha256").update("cliffesto-password-v1\0").update(password, "utf8").digest("hex");
 }
 
-export async function createUser(email: string, password: string) {
-  const passwordHash = await bcrypt.hash(password, 12);
+export async function hashPassword(password: string) {
+  return `sha256$${await bcrypt.hash(passwordDigest(password), 12)}`;
+}
+
+export async function verifyPassword(password: string, storedHash: string) {
+  const versionedHash = storedHash.startsWith("sha256$");
+  const hash = versionedHash ? storedHash.slice("sha256$".length) : storedHash;
+  const compareValue = versionedHash ? passwordDigest(password) : password;
+  return bcrypt.compare(compareValue, hash);
+}
+
+export async function createUser(fullName: string, email: string, password: string) {
+  const passwordHash = await hashPassword(password);
   const result = await query<UserRow>(
-    "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email",
-    [email.toLowerCase().trim(), passwordHash],
+    "INSERT INTO users (full_name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, email",
+    [fullName.trim(), email.toLowerCase().trim(), passwordHash],
   );
   return result.rows[0];
 }
@@ -40,7 +64,7 @@ export async function verifyUser(email: string, password: string) {
     [email.toLowerCase().trim()],
   );
   const user = result.rows[0];
-  if (!user || !(await bcrypt.compare(password, user.password_hash))) return null;
+  if (!user || !(await verifyPassword(password, user.password_hash))) return null;
   return { id: user.id, email: user.email };
 }
 
@@ -79,7 +103,7 @@ export async function getCurrentUser() {
   const result = await query<SessionRow>(
     `SELECT
        s.user_id,
-       u.name,
+       u.full_name AS name,
        u.email
      FROM sessions s
      JOIN users u ON u.id = s.user_id
@@ -114,7 +138,14 @@ export async function requireSameOrigin() {
   const requestHeaders = await headers();
   const origin = requestHeaders.get("origin");
   const host = requestHeaders.get("host");
-  if (origin && host && new URL(origin).host !== host) throw new Error("Invalid request origin.");
+  if (!origin) return;
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    throw new InvalidAuthOriginError();
+  }
+  if (!host || originHost !== host) throw new InvalidAuthOriginError();
 }
 
 type RateEntry = { count: number; resetAt: number };
@@ -127,5 +158,5 @@ export function enforceAuthRateLimit(key: string) {
     return;
   }
   current.count += 1;
-  if (current.count > 10) throw new Error("Too many authentication attempts. Try again in a minute.");
+  if (current.count > 10) throw new AuthRateLimitError();
 }

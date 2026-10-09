@@ -70,36 +70,36 @@ function FilterForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-      <label className="block text-sm font-semibold text-slate-800">
+    <form onSubmit={submit} className="space-y-5">
+      <label className="block text-sm font-medium text-slate-800">
         Category
-        <select name="category" defaultValue={values.category} className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800">
+        <select name="category" defaultValue={values.category} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800">
           <option value="">All categories</option>
           {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}
         </select>
       </label>
 
       <fieldset>
-        <legend className="text-sm font-semibold text-slate-800">Price range (INR)</legend>
+        <legend className="text-sm font-medium text-slate-800">Price range (INR)</legend>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <label className="sr-only" htmlFor={minPriceId}>Minimum price</label>
-          <input id={minPriceId} name="minPrice" type="number" min="0" step="1" inputMode="numeric" placeholder="Min" defaultValue={values.minPrice} className="min-h-11 min-w-0 rounded-xl border border-slate-300 px-3 text-sm" />
+          <input id={minPriceId} name="minPrice" type="number" min="0" step="1" inputMode="numeric" placeholder="Min" defaultValue={values.minPrice} className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 text-sm" />
           <label className="sr-only" htmlFor={maxPriceId}>Maximum price</label>
-          <input id={maxPriceId} name="maxPrice" type="number" min="0" step="1" inputMode="numeric" placeholder="Max" defaultValue={values.maxPrice} className="min-h-11 min-w-0 rounded-xl border border-slate-300 px-3 text-sm" />
+          <input id={maxPriceId} name="maxPrice" type="number" min="0" step="1" inputMode="numeric" placeholder="Max" defaultValue={values.maxPrice} className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 text-sm" />
         </div>
       </fieldset>
 
-      <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-slate-700">
+      <label className="flex min-h-11 items-center gap-3 text-sm text-slate-700">
         <input type="checkbox" name="inStock" defaultChecked={values.inStock} className="h-4 w-4 accent-violet-700" />
         In-stock products only
       </label>
       {validationError && <p role="alert" className="text-sm font-medium text-red-600">{validationError}</p>}
 
       <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-4">
-        <button type="button" onClick={onClear} className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        <button type="button" onClick={onClear} className="min-h-11 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
           Clear filters
         </button>
-        <button type="submit" className="min-h-11 rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700">
+        <button type="submit" className="min-h-11 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
           Apply filters
         </button>
       </div>
@@ -247,8 +247,8 @@ export function ProductBrowser({
 
   return (
     <section className="space-y-5">
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-        <form onSubmit={submitSearch} role="search" className="flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-3 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-200">
+      <div className="rounded-lg border border-slate-200 bg-white p-2 sm:p-3">
+        <form onSubmit={submitSearch} role="search" className="flex min-h-11 items-center gap-2 rounded-md border border-slate-300 bg-slate-50 px-3 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-200">
           <span aria-hidden="true" className="text-lg text-slate-500">⌕</span>
           <label htmlFor="listing-search" className="sr-only">Search products</label>
           <input
@@ -264,7 +264,7 @@ export function ProductBrowser({
               ×
             </button>
           )}
-          <button type="submit" className="min-h-10 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700">
+          <button type="submit" className="min-h-10 rounded-md bg-indigo-600 px-4 text-sm font-medium text-white hover:bg-indigo-700">
             Search
           </button>
         </form>
@@ -272,10 +272,10 @@ export function ProductBrowser({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
+          <p className="product-browser-label text-xs font-medium text-violet-700">
             {query ? "Search results" : categoryTitle ? "Category" : "The collection"}
           </p>
-          <h1 className="mt-1 truncate text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+          <h1 className="mt-1 break-words text-slate-950">
             {query ? `Results for “${query}”` : categoryTitle ?? "Discover products"}
           </h1>
           <p className="mt-1 text-sm text-slate-600" aria-live="polite">
@@ -283,17 +283,17 @@ export function ProductBrowser({
           </p>
         </div>
 
-        <label className="hidden min-h-11 items-center gap-2 text-sm font-medium text-slate-700 lg:flex">
+        <label className="hidden min-h-11 items-center gap-2 text-sm text-slate-700 md:flex">
           <span className="hidden sm:inline">Sort by</span>
-          <select aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800">
+          <select aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800">
             {sortOptions.filter((option) => option.value !== "newest" || currentResult?.source === "database").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
-        <div role="group" aria-label="Product view" className="hidden items-center rounded-xl border border-slate-300 p-1 sm:flex">
-          <button type="button" aria-pressed={view === "grid"} onClick={() => updateUrl({ view: null })} className={`min-h-9 rounded-lg px-3 text-sm font-semibold ${view === "grid" ? "bg-violet-100 text-violet-900" : "text-slate-600 hover:bg-slate-50"}`}>
+        <div role="group" aria-label="Product view" className="hidden items-center rounded-md border border-slate-300 p-1 sm:flex">
+          <button type="button" aria-pressed={view === "grid"} onClick={() => updateUrl({ view: null })} className={`min-h-9 rounded px-3 text-sm font-medium ${view === "grid" ? "bg-violet-100 text-violet-900" : "text-slate-600 hover:bg-slate-50"}`}>
             Grid
           </button>
-          <button type="button" aria-pressed={view === "list"} onClick={() => updateUrl({ view: "list" })} className={`min-h-9 rounded-lg px-3 text-sm font-semibold ${view === "list" ? "bg-violet-100 text-violet-900" : "text-slate-600 hover:bg-slate-50"}`}>
+          <button type="button" aria-pressed={view === "list"} onClick={() => updateUrl({ view: "list" })} className={`min-h-9 rounded px-3 text-sm font-medium ${view === "list" ? "bg-violet-100 text-violet-900" : "text-slate-600 hover:bg-slate-50"}`}>
             List
           </button>
         </div>
@@ -305,20 +305,15 @@ export function ProductBrowser({
         </p>
       )}
 
-      <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-2 border-y border-slate-200 bg-[var(--page-bg)] px-4 py-2 lg:hidden">
-        <button type="button" onClick={() => setFilterOpen(true)} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-50">
+      <div className="sticky top-0 z-20 -mx-3 flex items-center gap-2 border-y border-slate-200 bg-[var(--page-bg)] px-3 py-2 sm:-mx-5 sm:px-5 lg:hidden">
+        <button type="button" onClick={() => setFilterOpen(true)} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 hover:bg-slate-50">
           <span aria-hidden="true">☷</span>
           Filters
           {activeFilters.length > 0 && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">{activeFilters.length}</span>}
         </button>
         <label className="sr-only" htmlFor="mobile-sort">Sort products</label>
-        <select id="mobile-sort" aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 min-w-0 max-w-[37%] flex-1 rounded-xl border border-slate-300 bg-white px-2 text-xs text-slate-800">
+        <select id="mobile-sort" aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-800 md:hidden">
           {sortOptions.filter((option) => option.value !== "newest" || currentResult?.source === "database").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
-        <label className="sr-only" htmlFor="mobile-category">Filter by category</label>
-        <select id="mobile-category" value={category} onChange={(event) => updateUrl({ category: event.target.value || initialCategorySlug || null })} className="min-h-11 min-w-0 max-w-[37%] flex-1 rounded-xl border border-slate-300 bg-white px-2 text-xs text-slate-800">
-          <option value={initialCategorySlug ?? ""}>{initialCategorySlug ? categoryTitle : "All categories"}</option>
-          {categories.filter((item) => item.slug !== initialCategorySlug).map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
         </select>
         <span className="hidden whitespace-nowrap text-xs text-slate-600 sm:inline">{currentResult?.total ?? 0} results</span>
       </div>
@@ -335,20 +330,20 @@ export function ProductBrowser({
       )}
 
       <div className="grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="sticky top-4 hidden rounded-2xl border border-slate-200 bg-white p-5 lg:block">
-          <h2 className="mb-5 text-base font-bold text-slate-900">Refine results</h2>
+        <aside className="sticky top-4 hidden rounded-lg border border-slate-200 bg-white p-4 lg:block">
+          <h2 className="mb-4 text-base font-medium text-slate-900">Filter products</h2>
           {filterForm}
         </aside>
 
         <div className="min-w-0">
           {currentError ? (
-            <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-red-700">
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-8 text-center text-red-700">
               <p>{currentError}</p>
               <button type="button" onClick={() => { setError(null); setRetryCount((count) => count + 1); }} className="mt-4 min-h-11 rounded-xl bg-red-600 px-4 font-semibold text-white">Retry</button>
             </div>
           ) : loading ? (
-            <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4" aria-label="Loading products">
-              {Array.from({ length: 8 }, (_, index) => <div key={index} className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />)}
+            <div className="grid min-w-0 grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4" aria-label="Loading products">
+              {Array.from({ length: 8 }, (_, index) => <div key={index} className="aspect-[3/4] animate-pulse rounded-lg border border-slate-200 bg-slate-100" />)}
             </div>
           ) : currentResult?.data.length ? (
             <ProductGrid products={currentResult.data} variant={view === "list" ? "list" : query ? "search" : "grid"} />
@@ -372,12 +367,12 @@ export function ProductBrowser({
       <dialog
         ref={dialogRef}
         aria-label="Product filters"
-        className="filter-sheet fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85vh] w-full max-w-none overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl backdrop:bg-black/40 lg:hidden"
+        className="filter-sheet fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85vh] w-full max-w-none overflow-y-auto rounded-t-xl border border-slate-200 bg-white p-4 text-slate-900 shadow-xl backdrop:bg-black/40 sm:p-5 lg:hidden"
         onClose={() => setFilterOpen(false)}
       >
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-bold">Filter products</h2>
-          <button type="button" onClick={() => setFilterOpen(false)} aria-label="Close filters" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-xl hover:bg-slate-100">×</button>
+          <h2 className="text-lg font-medium">Filter products</h2>
+          <button type="button" onClick={() => setFilterOpen(false)} aria-label="Close filters" className="inline-flex h-11 w-11 items-center justify-center rounded-md text-xl hover:bg-slate-100">×</button>
         </div>
         {filterForm}
       </dialog>

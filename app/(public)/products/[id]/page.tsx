@@ -2,17 +2,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-<<<<<<< HEAD
 import { formatPrice } from "@/lib/products";
 import { getCatalogProduct, getRelatedCatalogProducts } from "@/lib/catalog";
-=======
-
-import {
-  getProduct,
-  formatPrice,
-  products,
-} from "@/lib/products";
->>>>>>> 084e3bd795eec06c23a6b5ad61d131582be79c94
 import { ProductActions } from "@/features/products/ProductActions";
 import { ProductGrid } from "@/components/products/ProductGrid";
 
@@ -49,11 +40,11 @@ function SectionTitle({
   return (
     <div className="mb-7">
       {eyebrow && (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+        <p className="mb-2 text-xs font-medium text-violet-700">
           {eyebrow}
         </p>
       )}
-      <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+      <h2 className="text-slate-950">
         {title}
       </h2>
     </div>
@@ -95,7 +86,7 @@ export default async function ProductPage({
         aria-label="Breadcrumb"
         className="border-b border-slate-200 bg-white"
       >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-5 py-4 text-xs text-slate-500 sm:px-8 sm:text-sm">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-3 py-3 text-xs text-slate-500 sm:px-6 sm:py-4 sm:text-sm">
           <Link
             href="/"
             className="transition hover:text-violet-700"
@@ -129,29 +120,27 @@ export default async function ProductPage({
         </div>
       </nav>
 
-      <div className="mx-auto max-w-7xl px-5 pb-24 pt-7 sm:px-8">
+      <div className="mx-auto max-w-7xl px-3 pb-12 pt-5 sm:px-6 sm:pb-16 sm:pt-7">
         {/* Main product layout */}
-        <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-10">
+        <div className="grid min-w-0 items-start gap-5 sm:gap-7 lg:grid-cols-12 lg:gap-8">
           {/* Product gallery */}
           <section
             aria-label="Product visual"
             className="lg:col-span-5"
           >
             <div className="lg:sticky lg:top-6">
-              <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="absolute inset-6 rounded-[2rem] bg-gradient-to-br from-violet-50 via-slate-50 to-rose-50" />
-
+              <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
                 {product.imageUrl ? (
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
                     fill
                     sizes="(max-width: 1024px) 100vw, 42vw"
-                    className="relative z-10 object-contain p-6 transition-transform duration-500 hover:scale-105 sm:p-10"
+                    className="relative z-10 object-contain p-3 sm:p-6"
                   />
                 ) : (
                   <div
-                    className="relative flex h-full w-full items-center justify-center text-[8rem] drop-shadow-xl transition-transform duration-500 hover:scale-105 sm:text-[11rem]"
+                    className="relative flex h-full w-full items-center justify-center text-[6rem] sm:text-[8rem]"
                     role="img"
                     aria-label={`Product illustration for ${product.name}`}
                   >
@@ -159,24 +148,9 @@ export default async function ProductPage({
                   </div>
                 )}
 
-                <div className="absolute left-5 top-5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm">
+                <div className="absolute left-3 top-3 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700">
                   {product.category}
                 </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Product preview
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Visual representation
-                  </p>
-                </div>
-
-                <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
-                  Cliffesto
-                </span>
               </div>
             </div>
           </section>
@@ -184,12 +158,8 @@ export default async function ProductPage({
           {/* Product information */}
           <section className="min-w-0 lg:col-span-4">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-800">
-                {product.category}
-              </span>
-
               <span
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                className={`inline-flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium ${
                   inStock
                     ? "bg-emerald-50 text-emerald-700"
                     : "bg-red-50 text-red-700"
@@ -204,7 +174,7 @@ export default async function ProductPage({
               </span>
             </div>
 
-            <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:text-4xl">
+            <h1 className="mt-3 text-slate-950">
               {product.name}
             </h1>
 
@@ -212,13 +182,13 @@ export default async function ProductPage({
               Explore product details, availability, and purchasing options.
             </p>
 
-            <div className="mt-6 border-y border-slate-200 py-6">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+            <div className="mt-5 border-y border-slate-200 py-5">
+              <p className="text-xs font-medium text-slate-500">
                 Product price
               </p>
 
               <div className="mt-2 flex flex-wrap items-end gap-3">
-                <span className="text-4xl font-extrabold tracking-tight text-slate-950">
+                <span className="product-detail-price text-slate-950">
                   {formatPrice(product.price)}
                 </span>
               </div>
@@ -249,7 +219,7 @@ export default async function ProductPage({
             </div>
 
             {/* Product facts */}
-            <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
               <div className="border-b border-slate-100 px-5 py-4">
                 <h2 className="text-base font-bold text-slate-950">
                   Product at a glance
@@ -326,12 +296,12 @@ export default async function ProductPage({
 
           {/* Purchase panel */}
           <aside className="lg:col-span-3">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
+              <p className="text-xs font-medium text-slate-500">
                 Purchase options
               </p>
 
-              <p className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950">
+              <p className="product-detail-price mt-4 text-slate-950">
                 {formatPrice(product.price)}
               </p>
 
@@ -411,7 +381,7 @@ export default async function ProductPage({
 
             <Link
               href="/products"
-              className="mt-4 flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
+              className="mt-4 flex min-h-11 items-center justify-center rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
             >
               ← Continue shopping
             </Link>
@@ -424,7 +394,7 @@ export default async function ProductPage({
             {/* Description */}
             <section
               id="full-description"
-              className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-6 sm:p-9"
+              className="scroll-mt-8 rounded-lg border border-slate-200 bg-white p-4 sm:p-6"
             >
               <SectionTitle
                 eyebrow="Get to know your product"
@@ -441,7 +411,7 @@ export default async function ProductPage({
             {/* Specifications */}
             <section
               id="specifications"
-              className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-6 sm:p-9"
+              className="scroll-mt-8 rounded-lg border border-slate-200 bg-white p-4 sm:p-6"
             >
               <SectionTitle
                 eyebrow="The details"
@@ -489,7 +459,7 @@ export default async function ProductPage({
             {/* Shopping and policies */}
             <section
               id="shopping-information"
-              className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-6 sm:p-9"
+              className="scroll-mt-8 rounded-lg border border-slate-200 bg-white p-4 sm:p-6"
             >
               <SectionTitle
                 eyebrow="Before you order"
@@ -575,8 +545,8 @@ export default async function ProductPage({
 
           {/* Side information */}
           <aside className="space-y-6 lg:col-span-4">
-            <div className="rounded-3xl border border-violet-100 bg-violet-50 p-7 sm:p-8">
-              <span className="text-xs font-bold uppercase tracking-widest text-violet-700">
+            <div className="rounded-lg border border-violet-100 bg-violet-50 p-4 sm:p-6">
+              <span className="text-xs font-medium text-violet-700">
                 Cliffesto product guide
               </span>
 
@@ -600,7 +570,7 @@ export default async function ProductPage({
               </a>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-7">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
               <h2 className="text-lg font-bold">
                 Quick product summary
               </h2>
@@ -651,11 +621,11 @@ export default async function ProductPage({
           >
             <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-violet-700">
+                <p className="mb-2 text-xs font-medium text-violet-700">
                   Keep exploring
                 </p>
 
-                <h2 className="text-3xl font-bold tracking-tight text-slate-950">
+                <h2 className="text-slate-950">
                   You might also like
                 </h2>
 
@@ -677,14 +647,14 @@ export default async function ProductPage({
         )}
 
         {/* Bottom call to action */}
-        <section className="brand-panel mt-20 rounded-3xl px-7 py-10 text-white sm:px-12">
+        <section className="brand-panel mt-10 rounded-lg px-5 py-7 text-white sm:px-8">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-violet-300">
+              <p className="text-xs font-medium text-violet-300">
                 Discover more with Cliffesto
               </p>
 
-              <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
+              <h2 className="mt-3">
                 Find what fits your everyday.
               </h2>
 
