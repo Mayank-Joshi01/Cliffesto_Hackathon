@@ -1,8 +1,11 @@
 
 import Link from "next/link";
+import Image from "next/image";
+import { connection } from "next/server";
 import type { ReactNode } from "react";
-import { products } from "@/lib/products";
+import { listHomeCatalog, type CatalogCategory } from "@/lib/catalog";
 import { ProductCard } from "@/components/products/ProductCard";
+import { SupabaseCatalogNotice } from "@/components/feedback/SupabaseCatalogNotice";
 
 type ButtonVariant = "dark" | "light" | "purple";
 
@@ -95,20 +98,21 @@ function SectionHeading({
   );
 }
 
-export default function HomePage() {
-  const featured = products.filter((product) => product.featured);
-
-  const displayedProducts = (
-    featured.length > 0 ? featured : products
-  ).slice(0, 8);
-
-  const categories = Array.from(
-    new Set(
-      products
-        .map((product) => product.category)
-        .filter(Boolean)
-    )
-  );
+export default async function HomePage() {
+  await connection();
+  let categories: CatalogCategory[] = [];
+  let displayedProducts: Awaited<ReturnType<typeof listHomeCatalog>>["products"] = [];
+  let totalProducts = 0;
+  let catalogError = false;
+  try {
+    const catalog = await listHomeCatalog();
+    categories = catalog.categories.filter((category) => category.level <= 1);
+    displayedProducts = catalog.products;
+    totalProducts = catalog.totalProducts;
+  } catch {
+    catalogError = true;
+    console.error("Homepage catalog data is unavailable.");
+  }
 
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--page-bg)] text-slate-900">
@@ -173,7 +177,7 @@ export default function HomePage() {
               <div className="mt-12 flex flex-wrap items-center gap-8 border-t border-violet-900/10 pt-7">
                 <div>
                   <p className="text-3xl font-black text-slate-950">
-                    {products.length}
+                    {totalProducts}
                   </p>
                   <p className="mt-1 text-xs font-medium text-slate-500">
                     Products to explore
@@ -289,20 +293,24 @@ export default function HomePage() {
               const style =
                 categoryStyles[index % categoryStyles.length];
 
-              const count = products.filter(
-                (product) => product.category === category
-              ).length;
+              const count = category.productCount;
 
               return (
                 <Link
-                  key={category}
-                  href={`/categories/${encodeURIComponent(category.toLowerCase().replace(/\s+/g, "-"))}`}
+                  key={category.id}
+                  href={`/categories/${encodeURIComponent(category.slug)}`}
                   className={`group flex min-h-48 flex-col justify-between rounded-3xl border border-transparent p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-xl hover:shadow-violet-900/5 sm:p-6 ${style.bg}`}
                 >
                   <div className="flex items-start justify-between">
-                    <span className="text-5xl transition-transform duration-300 group-hover:scale-110">
-                      {style.icon}
-                    </span>
+                    {category.imageUrl ? (
+                      <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-white/70">
+                        <Image src={category.imageUrl} alt="" fill sizes="64px" className="object-cover" unoptimized />
+                      </div>
+                    ) : (
+                      <span className="text-5xl transition-transform duration-300 group-hover:scale-110">
+                        {style.icon}
+                      </span>
+                    )}
 
                     <span
                       className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg text-slate-950 transition-colors group-hover:bg-violet-100"
@@ -312,16 +320,15 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <h3
-                      className={`text-lg font-extrabold sm:text-xl ${style.text}`}
-                    >
-                      {category}
+                    <h3 className={`text-lg font-extrabold sm:text-xl ${style.text}`}>
+                      {category.name}
                     </h3>
 
-                    <p className="mt-2 text-xs font-medium text-slate-500">
-                      {count}{" "}
-                      {count === 1 ? "product" : "products"}
-                    </p>
+                    {count !== undefined && count >= 0 && (
+                      <p className="mt-2 text-xs font-medium text-slate-500">
+                        {count} {count === 1 ? "product" : "products"}
+                      </p>
+                    )}
                   </div>
                 </Link>
               );
@@ -329,7 +336,7 @@ export default function HomePage() {
           </div>
         ) : (
           <p className="mt-8 text-sm text-slate-500">
-            New collections are coming soon.
+            {catalogError ? "Collections are temporarily unavailable." : "New collections are coming soon."}
           </p>
         )}
       </section>
@@ -394,6 +401,8 @@ export default function HomePage() {
               />
             ))}
           </div>
+        ) : !catalogError && totalProducts === 0 ? (
+          <SupabaseCatalogNotice />
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
             <div className="text-5xl">📦</div>
@@ -401,7 +410,7 @@ export default function HomePage() {
               Something good is coming.
             </h3>
             <p className="mt-2 text-sm text-slate-500">
-              Products will appear here when they are added.
+              {catalogError ? "The catalog is temporarily unavailable." : "Products will appear here when they are added."}
             </p>
           </div>
         )}

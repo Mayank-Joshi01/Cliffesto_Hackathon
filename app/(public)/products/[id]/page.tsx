@@ -2,17 +2,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-<<<<<<< HEAD
 import { formatPrice } from "@/lib/products";
 import { getCatalogProduct, getRelatedCatalogProducts } from "@/lib/catalog";
-=======
-
-import {
-  getProduct,
-  formatPrice,
-  products,
-} from "@/lib/products";
->>>>>>> 084e3bd795eec06c23a6b5ad61d131582be79c94
 import { ProductActions } from "@/features/products/ProductActions";
 import { ProductGrid } from "@/components/products/ProductGrid";
 
@@ -70,15 +61,18 @@ export default async function ProductPage({
     notFound();
   }
 
-  const related = await getRelatedCatalogProducts(product.category, product.id);
+  let related: Awaited<ReturnType<typeof getRelatedCatalogProducts>> = [];
+  try {
+    related = await getRelatedCatalogProducts(product.category, product.id, product.subcategory);
+  } catch {
+    console.error("Related products are unavailable.");
+  }
 
   const inStock = product.stock > 0;
 
   const stockMessage = !inStock
-    ? "Currently unavailable"
-    : product.stock <= 5
-      ? `Only ${product.stock} left in stock`
-      : "Available to order";
+    ? product.availability ?? "Currently unavailable"
+    : product.availability ?? "Available";
 
   const description =
     product.description?.trim() || "No description available.";
@@ -148,6 +142,7 @@ export default async function ProductPage({
                     fill
                     sizes="(max-width: 1024px) 100vw, 42vw"
                     className="relative z-10 object-contain p-6 transition-transform duration-500 hover:scale-105 sm:p-10"
+                    unoptimized
                   />
                 ) : (
                   <div
@@ -221,6 +216,16 @@ export default async function ProductPage({
                 <span className="text-4xl font-extrabold tracking-tight text-slate-950">
                   {formatPrice(product.price)}
                 </span>
+                {product.price !== undefined && product.originalPrice !== undefined && product.originalPrice > product.price && (
+                  <span className="pb-1 text-lg text-slate-500 line-through">
+                    {formatPrice(product.originalPrice)}
+                  </span>
+                )}
+                {product.discountPercentage !== undefined && product.discountPercentage > 0 && (
+                  <span className="pb-1 text-sm font-semibold text-emerald-700">
+                    {product.discountPercentage}% off
+                  </span>
+                )}
               </div>
 
               <p className="mt-3 text-xs leading-5 text-slate-500">
@@ -261,6 +266,14 @@ export default async function ProductPage({
                   label="Category"
                   value={product.category}
                 />
+                {product.brand && <DetailRow label="Brand" value={product.brand} />}
+                {product.sellerName && <DetailRow label="Seller" value={product.sellerName} />}
+                {product.material && <DetailRow label="Material" value={product.material} />}
+                {product.colors?.length ? <DetailRow label="Colors" value={product.colors.join(", ")} /> : null}
+                {product.sizes?.length ? <DetailRow label="Sizes" value={product.sizes.join(", ")} /> : null}
+                {product.codAvailable && <DetailRow label="Cash on delivery" value={product.codAvailable} />}
+                {product.deliveryTime && <DetailRow label="Delivery time" value={product.deliveryTime} />}
+                {product.returnPolicy && <DetailRow label="Return policy" value={product.returnPolicy} />}
 
                 <DetailRow
                   label="Product ID"
@@ -277,12 +290,22 @@ export default async function ProductPage({
                   value={stockMessage}
                 />
 
-                <DetailRow
-                  label="Units in stock"
-                  value={product.stock}
-                />
               </dl>
             </div>
+
+            {product.seller && (
+              <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+                <h2 className="font-bold text-slate-950">Seller information</h2>
+                <dl className="mt-3">
+                  {product.seller.rating !== undefined && <DetailRow label="Rating" value={product.seller.rating} />}
+                  {product.seller.verified !== undefined && <DetailRow label="Verified" value={product.seller.verified ? "Verified seller" : "Not verified"} />}
+                  {product.seller.location && <DetailRow label="Location" value={product.seller.location} />}
+                  {product.seller.responseTime && <DetailRow label="Response time" value={product.seller.responseTime} />}
+                  {product.seller.returnPolicy && <DetailRow label="Seller returns" value={product.seller.returnPolicy} />}
+                  {product.seller.codAccepted !== undefined && <DetailRow label="Seller COD" value={product.seller.codAccepted ? "Accepted" : "Not accepted"} />}
+                </dl>
+              </section>
+            )}
 
             {/* Page links */}
             <div className="mt-8">
@@ -507,8 +530,8 @@ export default async function ProductPage({
 
                   <p className="mt-4 text-sm leading-7 text-slate-600">
                     {inStock
-                      ? `${product.stock} unit${product.stock === 1 ? "" : "s"} currently listed as available. Stock can change before an order is placed.`
-                      : "This product is currently out of stock."}
+                      ? `${stockMessage}. Availability can change before an order is placed.`
+                      : stockMessage}
                   </p>
                 </details>
 

@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { CatalogCategory, CatalogProduct, CatalogSort } from "@/lib/catalog";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { SupabaseCatalogNotice } from "@/components/feedback/SupabaseCatalogNotice";
 import { formatPrice } from "@/lib/products";
 
 type ResponseData = {
@@ -13,7 +14,8 @@ type ResponseData = {
   page: number;
   limit: number;
   categories: CatalogCategory[];
-  source: "mock" | "database";
+  source: "database";
+  hasVisibleProducts?: boolean;
   error?: string;
 };
 
@@ -21,7 +23,6 @@ type FilterValues = {
   category: string;
   minPrice: string;
   maxPrice: string;
-  inStock: boolean;
 };
 
 const sortOptions: { value: CatalogSort; label: string }[] = [
@@ -29,7 +30,6 @@ const sortOptions: { value: CatalogSort; label: string }[] = [
   { value: "smart", label: "Smart discovery" },
   { value: "price-asc", label: "Price: low to high" },
   { value: "price-desc", label: "Price: high to low" },
-  { value: "newest", label: "Newest" },
 ];
 
 function FilterForm({
@@ -64,7 +64,6 @@ function FilterForm({
       category: String(form.get("category") ?? ""),
       minPrice,
       maxPrice,
-      inStock: form.get("inStock") === "on",
     });
     onClose?.();
   }
@@ -89,10 +88,6 @@ function FilterForm({
         </div>
       </fieldset>
 
-      <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-slate-700">
-        <input type="checkbox" name="inStock" defaultChecked={values.inStock} className="h-4 w-4 accent-violet-700" />
-        In-stock products only
-      </label>
       {validationError && <p role="alert" className="text-sm font-medium text-red-600">{validationError}</p>}
 
       <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-4">
@@ -109,9 +104,11 @@ function FilterForm({
 
 export function ProductBrowser({
   initialCategorySlug,
+  initialSubcategory,
   categoryTitle,
 }: {
   initialCategorySlug?: string;
+  initialSubcategory?: string;
   categoryTitle?: string;
 }) {
   const router = useRouter();
@@ -124,7 +121,7 @@ export function ProductBrowser({
   const sort = sortOptions.some((option) => option.value === sortParam) ? sortParam as CatalogSort : "relevance";
   const view = params.get("view") === "list" ? "list" : "grid";
   const page = Math.max(1, Number(params.get("page") ?? 1) || 1);
-  const requestKey = `${pathname}?${queryString}|${initialCategorySlug ?? ""}`;
+  const requestKey = `${pathname}?${queryString}|${initialCategorySlug ?? ""}|${initialSubcategory ?? ""}`;
 
   const [result, setResult] = useState<{ key: string; value: ResponseData } | null>(null);
   const [error, setError] = useState<{ key: string; message: string } | null>(null);
@@ -147,6 +144,7 @@ export function ProductBrowser({
     const id = ++requestId.current;
     const apiParams = new URLSearchParams(queryString);
     if (initialCategorySlug && !apiParams.has("category")) apiParams.set("category", initialCategorySlug);
+    if (initialSubcategory && !apiParams.has("subcategory")) apiParams.set("subcategory", initialSubcategory);
     apiParams.set("page", String(page));
     apiParams.set("limit", "12");
     const controller = new AbortController();
@@ -166,7 +164,7 @@ export function ProductBrowser({
         }
       });
     return () => controller.abort();
-  }, [initialCategorySlug, page, queryString, requestKey, retryCount]);
+  }, [initialCategorySlug, initialSubcategory, page, queryString, requestKey, retryCount]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -199,7 +197,6 @@ export function ProductBrowser({
       category: values.category || initialCategorySlug || null,
       minPrice: values.minPrice.trim() || null,
       maxPrice: values.maxPrice.trim() || null,
-      inStock: values.inStock ? "true" : null,
     });
   }
 
@@ -208,7 +205,6 @@ export function ProductBrowser({
       category: initialCategorySlug ?? null,
       minPrice: null,
       maxPrice: null,
-      inStock: null,
     });
   }
 
@@ -225,14 +221,12 @@ export function ProductBrowser({
     category,
     minPrice: params.get("minPrice") ?? "",
     maxPrice: params.get("maxPrice") ?? "",
-    inStock: params.get("inStock") === "true",
   };
   const totalPages = Math.max(1, Math.ceil((currentResult?.total ?? 0) / (currentResult?.limit ?? 12)));
   const activeFilters = [
     category && { key: "category", label: categories.find((item) => item.slug === category)?.name ?? category },
     params.get("minPrice") && { key: "minPrice", label: `From ${formatPrice(Number(params.get("minPrice")))}` },
     params.get("maxPrice") && { key: "maxPrice", label: `Up to ${formatPrice(Number(params.get("maxPrice")))}` },
-    filterValues.inStock && { key: "inStock", label: "In stock" },
   ].filter((item): item is { key: string; label: string } => Boolean(item));
   const filterForm = (
     <FilterForm
@@ -286,7 +280,7 @@ export function ProductBrowser({
         <label className="hidden min-h-11 items-center gap-2 text-sm font-medium text-slate-700 lg:flex">
           <span className="hidden sm:inline">Sort by</span>
           <select aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800">
-            {sortOptions.filter((option) => option.value !== "newest" || currentResult?.source === "database").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
         <div role="group" aria-label="Product view" className="hidden items-center rounded-xl border border-slate-300 p-1 sm:flex">
@@ -301,7 +295,7 @@ export function ProductBrowser({
 
       {sort === "smart" && (
         <p className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-          Smart discovery prioritizes in-stock products, then lower prices. It uses catalog availability and price only; no ratings or recommendations are fabricated.
+          Smart discovery prioritizes products with the largest listed discount.
         </p>
       )}
 
@@ -313,7 +307,7 @@ export function ProductBrowser({
         </button>
         <label className="sr-only" htmlFor="mobile-sort">Sort products</label>
         <select id="mobile-sort" aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)} className="min-h-11 min-w-0 max-w-[37%] flex-1 rounded-xl border border-slate-300 bg-white px-2 text-xs text-slate-800">
-          {sortOptions.filter((option) => option.value !== "newest" || currentResult?.source === "database").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
         <label className="sr-only" htmlFor="mobile-category">Filter by category</label>
         <select id="mobile-category" value={category} onChange={(event) => updateUrl({ category: event.target.value || initialCategorySlug || null })} className="min-h-11 min-w-0 max-w-[37%] flex-1 rounded-xl border border-slate-300 bg-white px-2 text-xs text-slate-800">
@@ -352,6 +346,8 @@ export function ProductBrowser({
             </div>
           ) : currentResult?.data.length ? (
             <ProductGrid products={currentResult.data} variant={view === "list" ? "list" : query ? "search" : "grid"} />
+          ) : currentResult?.hasVisibleProducts === false ? (
+            <SupabaseCatalogNotice />
           ) : (
             <EmptyState title="No products found">
               Try changing your search or filters.
